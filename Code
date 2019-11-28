@@ -1,0 +1,122 @@
+#Predictive Analysis
+#checking and working on how to check fraud and non-fraudlent transactions
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+#installing seaborn for better visualization
+import seaborn as sns
+sns.set()
+
+#importing file and performing basic data anaylysis
+df = pd.read_csv('xyz.csv') #file either be taken from path, wd or online db
+
+#understanding the data
+df.shape
+df.head()
+df.info()
+df.describe()
+
+#importing sklearn for Ml and prediction
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+
+#re-sampling and scaling dataset for models to better predictions, since some the cols have outliers
+df['normAmount']=StandardScaler().fit_transform(df['Amount'].values.reshape(-1,1))
+data_in=df.drop(['Time','Amount'],axis=1)
+data_out=df['Class']
+
+#splitting testing and training data, 70/30 split can be changed based on requirement and annotated data availibility
+x_train, x_test, y_train, y_test = train_test_split(data_in, data_out, train_size=0.70, test_size=0.30, random_state=1)
+
+#checking the splitted lenghts
+print(len(x_train))
+print(len(x_test))
+print(len(y_train))
+print(len(y_test))
+
+#importing neccesary model for applying on the data
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import classification_report, confusion_matrix
+
+# Defining the model
+model = LogisticRegression()
+
+# Fit and predict
+model.fit(x_train, y_train)
+pred = model.predict(x_test)
+
+#checking result
+print(classification_report(y_test, pred))
+print(confusion_matrix(y_test, pred))
+
+#checking complete predection sensitivity
+from sklearn.metrics import f1_score, recall_score
+f1_score = round(f1_score(y_test, pred), 2)
+recall_score = round(recall_score(y_test, pred), 2)
+print(f1_score)
+print(recall_score)
+
+
+## now using support vector machine test it with previous model
+from sklearn import svm
+from sklearn.svm import SVC
+
+#Using the rbf kernel to build the initail model.
+model= svm.SVC(C= 1, kernel= 'linear', random_state= 0)
+
+# Fit and predict
+model.fit(x_train, y_train)
+pred = model.predict(x_test)
+
+#checking result
+print(classification_report(y_test, pred))
+print(confusion_matrix(y_test, pred))
+f1_score = round(f1_score(y_test, pred), 2)
+recall_score = round(recall_score(y_test, pred), 2)
+print(f1_score)
+print(recall_score)
+
+#applying visualization on SVM model
+c_name = ['not_fraud', 'fraud']
+cs_matrix = confusion_matrix(y_test, pred)
+df_sv = pd.DataFrame(cs_matrix, index=c_name, columns=c_name)
+
+
+sns.heatmap(df_sv, annot=True)
+plt.title("SVM")
+plt.ylabel("True Class")
+plt.xlabel("Predicted Class")
+plt.show()
+
+### Lets try Random Forest
+
+#applying another model to check if we can yeild any better performance
+
+from sklearn.ensemble import RandomForestClassifier
+rf_model = RandomForestClassifier(n_estimators = 100, n_jobs =4)
+from sklearn.metrics import f1_score, recall_score
+
+# Fit new model and check new predictions
+rf_model.fit(x_train, y_train)
+pred_n = rf_model.predict(x_test)
+
+#checking new results
+print(classification_report(y_test, pred_n))
+print(confusion_matrix(y_test, pred_n))
+f1_score = round(f1_score(y_test, pred_n), 2)
+recall_score = round(recall_score(y_test, pred_n), 2)
+print(f1_score)
+print(recall_score)
+
+#applying visualization on new model
+cnew_matrix = confusion_matrix(y_test, pred_n)
+df_v = pd.DataFrame(cnew_matrix, index=c_name, columns=c_name)
+
+
+sns.heatmap(df_v, annot=True, cmap="Blues")
+plt.title("Random Forest")
+plt.ylabel("True Class")
+plt.xlabel("Predicted Class")
+plt.show()
